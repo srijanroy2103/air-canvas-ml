@@ -17,6 +17,7 @@ python3 , numpy , opencv, mediapipe
 2. Now prepare the frame based on the required conditions and space to draw and options to display and the orientation
 3. Initialize mediapipe to read the hand movements
 4. Detect the hand landmarks from the RGB frame to the mediapipe hand detector
-5. Set the conditions when the user decides to skip the draw and move to other part of the window to draw over there
-6. Store the points where the drawing conditions are satisfied in an array
-7. Draw the points on the frame
+5. Only draw using the hand selected by the user at the starting to avoid any kind of mishaps
+6. Set the conditions when the user decides to skip the draw and move to other part of the window to draw over there
+7. Store the points where the drawing conditions are satisfied in an array
+8. Draw the points on the frame

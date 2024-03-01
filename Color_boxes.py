@@ -7,7 +7,7 @@ def color_boxes (frame):
     # space between each box
     spBox = 50
     # start point of the box
-    start_box = 40
+    start_box = 100
     ######
 
     # CLEAR button

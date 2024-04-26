@@ -61,20 +61,28 @@ while True :
 
     framergb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
+    paintWindow = np.zeros((720,1280 , 3))+255
     
     # choose the hand screen
     if(flag == 0):
         frame = cv2.rectangle(frame , (int(0.25*wCam),int(0.25*hCam)) , (int(wCam*0.75) , int(hCam*0.75)) , (255,255,255),cv2.FILLED)
+        paintWindow = cv2.rectangle(paintWindow , (int(0.25*wCam),int(0.25*hCam)) , (int(wCam*0.75) , int(hCam*0.75)) , (255,255,255),cv2.FILLED)
 
         frame = cv2.rectangle(frame , (int(0.25*wCam),int(0.25*hCam)) , (int(wCam*0.75) , int(hCam*0.75)) , (0,0,0),2)
         cv2.putText(frame , "CHOOSE THE HAND" , (350,300), cv2.FONT_HERSHEY_SIMPLEX, 1.8, (0, 0, 0), 6, cv2.LINE_AA)
+        paintWindow = cv2.rectangle(paintWindow , (int(0.25*wCam),int(0.25*hCam)) , (int(wCam*0.75) , int(hCam*0.75)) , (0,0,0),2)
+        cv2.putText(paintWindow , "CHOOSE THE HAND" , (350,300), cv2.FONT_HERSHEY_SIMPLEX, 1.8, (0, 0, 0), 6, cv2.LINE_AA)
 
         ## Two boxes
         frame = cv2.rectangle(frame , (int(0.25*wCam),390) , (int(0.5*wCam) , 540) , (0,0,0),2)
         cv2.putText(frame , "LEFT" , (400, 460), cv2.FONT_HERSHEY_SIMPLEX, 1.2, (0, 0, 0), 4, cv2.LINE_AA)
+        paintWindow = cv2.rectangle(paintWindow , (int(0.25*wCam),390) , (int(0.5*wCam) , 540) , (0,0,0),2)
+        cv2.putText(paintWindow , "LEFT" , (400, 460), cv2.FONT_HERSHEY_SIMPLEX, 1.2, (0, 0, 0), 4, cv2.LINE_AA)
 
         frame = cv2.rectangle(frame , (int(0.5*wCam),390) , (int(0.75*wCam) , 540) , (0,0,0),2)
         cv2.putText(frame , "RIGHT" , (740, 460), cv2.FONT_HERSHEY_SIMPLEX, 1.2, (0, 0, 0), 4, cv2.LINE_AA)
+        paintWindow = cv2.rectangle(paintWindow , (int(0.5*wCam),390) , (int(0.75*wCam) , 540) , (0,0,0),2)
+        cv2.putText(paintWindow , "RIGHT" , (740, 460), cv2.FONT_HERSHEY_SIMPLEX, 1.2, (0, 0, 0), 4, cv2.LINE_AA)
 
         result = mpHands.process(framergb)
 
@@ -93,10 +101,15 @@ while True :
 
                 # Drawing landmarks on frames
                 mpDraw.draw_landmarks(frame, handslms, mp.solutions.hands.HAND_CONNECTIONS)
+                # in white board plotting the landmarks
+                mpDraw.draw_landmarks(paintWindow, handslms, mp.solutions.hands.HAND_CONNECTIONS , mpDraw.DrawingSpec(color = (0,0,255)) ,mpDraw.DrawingSpec(color = (0,0,0)))
+
+
             index_finger = (landmarks[8][0],landmarks[8][1])
             center = index_finger
             thumb = (landmarks[4][0],landmarks[4][1])
             cv2.circle(frame, center, 7, (0,255,0),-1)
+            cv2.circle(paintWindow, center, 7, (0,255,0),-1)
             print(center[1]-thumb[1])
 
             if center[1] >=400 and center[1] <=530 :
@@ -117,7 +130,7 @@ while True :
 
         if(right == 1):
             
-            start_end = color_boxes(frame)
+            start_end = color_boxes(frame , paintWindow)
             ########
             # HAND DETECTION
             result = mpHands.process(framergb)
@@ -155,6 +168,7 @@ while True :
 
                     # Drawing landmarks on frames
                     mpDraw.draw_landmarks(frame, handslms, mp.solutions.hands.HAND_CONNECTIONS)
+                    mpDraw.draw_landmarks(paintWindow, handslms, mp.solutions.hands.HAND_CONNECTIONS , mpDraw.DrawingSpec(color = (0,0,255)) ,mpDraw.DrawingSpec(color = (0,0,0)))
 
                     try :
                         index_finger = (landmarks[8][0],landmarks[8][1])
@@ -164,6 +178,7 @@ while True :
                         ring_finger = (landmarks[16][0] , landmarks[16][1])
                         # cv2.circle(frame, ring_finger, 7, (0,0,0),-3)
                         cv2.circle(frame, center, 7, (0,255,0),-1)
+                        cv2.circle(paintWindow, center, 7, (0,255,0),-1)
                         print(center[1]-thumb[1])
 
 
@@ -238,30 +253,34 @@ while True :
                             elif colorIndex == 3:
                                 ypoints[yellow_index].appendleft(center)
                             elif colorIndex == 4:
-                                circle_arr = make_circle(frame , center , thumb , middle_finger) 
+                                circle_arr = make_circle(frame , paintWindow ,center , thumb , middle_finger) 
                                 cv2.circle(frame , (circle_arr[0],circle_arr[1]),circle_arr[2],(0,0,0),2)
+                                cv2.circle(paintWindow , (circle_arr[0],circle_arr[1]),circle_arr[2],(0,0,0),2)
                                 circle_points.append(circle_arr)
                                 print("oooooooooooooooooooo")
                                 colorIndex = 8
                             elif colorIndex == 5 :
-                                quadri_arr = make_quadri(frame , center , thumb , middle_finger)
+                                quadri_arr = make_quadri(frame , paintWindow ,center , thumb , middle_finger)
                                 cv2.rectangle(frame, (quadri_arr[0][0],quadri_arr[0][1]), (quadri_arr[1][0],quadri_arr[1][1]), (0,0,0), 2)
+                                cv2.rectangle(paintWindow, (quadri_arr[0][0],quadri_arr[0][1]), (quadri_arr[1][0],quadri_arr[1][1]), (0,0,0), 2)
                                 quadri_points.append(quadri_arr)
                                 print("DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD")
                                 colorIndex = 8
 
                             elif colorIndex == 6 :
-                                tri_arr = make_triangle(frame , center , thumb , middle_finger , ring_finger)
+                                tri_arr = make_triangle(frame , paintWindow ,center , thumb , middle_finger , ring_finger)
                                 p1 , p2 , p3 = tri_arr[0] , tri_arr[1] , tri_arr[2] 
                                 tri_pts = np.array([p1,p2,p3],np.int32)
                                 tri_pts = tri_pts.reshape((-1,1,2))
                                 cv2.polylines(frame , [tri_pts],isClosed=True , color=(0,0,0) , thickness=2)
+                                cv2.polylines(paintWindow , [tri_pts],isClosed=True , color=(0,0,0) , thickness=2)
                                 triangle_points.append(tri_pts)
                                 colorIndex = 8
                             
                             elif colorIndex == 7 :
-                                 line_arr = make_line(frame , center , thumb , middle_finger)
+                                 line_arr = make_line(frame ,paintWindow , center , thumb , middle_finger)
                                  cv2.line(frame , line_arr[0] , line_arr[1] , (0,0,0) , 2)
+                                 cv2.line(paintWindow ,line_arr[0] , line_arr[1] , (0,0,0) , 2)
                                  line_points.append(line_arr)
                                  colorIndex = 8
 
@@ -272,6 +291,7 @@ while True :
                             p = (wrong_and_landmarks_points[9][0] , wrong_and_landmarks_points[9][1])
                             #cv2.putText(frame, "WRONG HAND", (int(0.4*wCam), 120), cv2.FONT_HERSHEY_SIMPLEX, 1.5, (0, 0, 0), 4, cv2.LINE_AA)
                             cv2.putText(frame, "WRONG HAND", (p[0]-50, p[1]+70), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0,0,0), 2, cv2.LINE_AA)
+                            cv2.putText(paintWindow, "WRONG HAND", (p[0]-50, p[1]+70), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0,0,0), 2, cv2.LINE_AA)
                             print("Wrong hand")
                         except : 
                              print(KeyError)
@@ -292,18 +312,21 @@ while True :
                  for i in range(len(line_points)) :
                       print(line_points[i])
                       cv2.line(frame , line_points[i][0] , line_points[i][1] , (0,0,0) ,2)
+                      cv2.line(paintWindow , line_points[i][0] , line_points[i][1] , (0,0,0) ,2)
 
             if(len(triangle_points)>0):
                  print(triangle_points)
                  for i in range(len(triangle_points)):
                       print(triangle_points[i])
                       cv2.polylines(frame , [triangle_points[i]],True,(0,0,0),2)
+                      cv2.polylines(paintWindow , [triangle_points[i]],True,(0,0,0),2)
 
             if(len(quadri_points)>0):
                  print(quadri_points)
                  for i in range(len(quadri_points)):
                       print(quadri_points[i])
                       cv2.rectangle(frame , quadri_points[i][0] , quadri_points[i][1],(0,0,0) , 2)
+                      cv2.rectangle(paintWindow , quadri_points[i][0] , quadri_points[i][1],(0,0,0) , 2)
                       
             if len(circle_points)>0 :
                 print(circle_points)
@@ -312,6 +335,7 @@ while True :
                         list(circle_points[i])
                         a , b, radius = circle_points[i][0],circle_points[i][1],circle_points[i][2]
                         cv2.circle(frame , (a,b),radius,(0,0,0),2)
+                        cv2.circle(paintWindow , (a,b),radius,(0,0,0),2)
 
                     
             points = [bpoints, gpoints, rpoints, ypoints]
@@ -322,12 +346,13 @@ while True :
                         if points[i][j][k - 1] is None or points[i][j][k] is None:
                             continue
                         cv2.line(frame, points[i][j][k - 1], points[i][j][k], colors[i], 2)
+                        cv2.line(paintWindow, points[i][j][k - 1], points[i][j][k], colors[i], 2)
 
             if cv2.waitKey(1) == ord('q'):
                 break          
         elif(left == 1) :
 
-            start_end = color_boxes(frame)
+            start_end = color_boxes(frame , paintWindow)
 
             ########
             # HAND DETECTION
@@ -365,6 +390,7 @@ while True :
 
                     # Drawing landmarks on frames
                     mpDraw.draw_landmarks(frame, handslms, mp.solutions.hands.HAND_CONNECTIONS)
+                    mpDraw.draw_landmarks(paintWindow, handslms, mp.solutions.hands.HAND_CONNECTIONS , mpDraw.DrawingSpec(color = (0,0,255)) ,mpDraw.DrawingSpec(color = (0,0,0)))
 
                     try :
                         index_finger = (landmarks[8][0],landmarks[8][1])
@@ -374,6 +400,7 @@ while True :
                         ring_finger = (landmarks[16][0] , landmarks[16][1])
                         # cv2.circle(frame, ring_finger, 7, (0,0,0),-3)
                         cv2.circle(frame, center, 7, (0,255,0),-1)
+                        cv2.circle(paintWindow, center, 7, (0,255,0),-1)
                         print(center[1]-thumb[1])
 
 
@@ -451,12 +478,14 @@ while True :
                             elif colorIndex == 4:
                                 circle_arr = make_circle(frame , center , thumb , middle_finger) 
                                 cv2.circle(frame , (circle_arr[0],circle_arr[1]),circle_arr[2],(0,0,0),2)
+                                cv2.circle(paintWindow , (circle_arr[0],circle_arr[1]),circle_arr[2],(0,0,0),2)
                                 circle_points.append(circle_arr)
                                 print("oooooooooooooooooooo")
                                 colorIndex = 8
                             elif colorIndex == 5 :
                                 quadri_arr = make_quadri(frame , center , thumb , middle_finger)
                                 cv2.rectangle(frame, (quadri_arr[0][0],quadri_arr[0][1]), (quadri_arr[1][0],quadri_arr[1][1]), (0,0,0), 2)
+                                cv2.rectangle(paintWindow, (quadri_arr[0][0],quadri_arr[0][1]), (quadri_arr[1][0],quadri_arr[1][1]), (0,0,0), 2)
                                 quadri_points.append(quadri_arr)
                                 print("DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD")
                                 colorIndex = 8
@@ -467,12 +496,14 @@ while True :
                                 tri_pts = np.array([p1,p2,p3],np.int32)
                                 tri_pts = tri_pts.reshape((-1,1,2))
                                 cv2.polylines(frame , [tri_pts],isClosed=True , color=(0,0,0) , thickness=2)
+                                cv2.polylines(paintWindow , [tri_pts],isClosed=True , color=(0,0,0) , thickness=2)
                                 triangle_points.append(tri_pts)
                                 colorIndex = 8
                             
                             elif colorIndex == 7 :
                                  line_arr = make_line(frame , center , thumb , middle_finger)
                                  cv2.line(frame , line_arr[0] , line_arr[1] , (0,0,0) , 2)
+                                 cv2.line(paintWindow ,line_arr[0] , line_arr[1] , (0,0,0) , 2)
                                  line_points.append(line_arr)
                                  colorIndex = 8
                                                             
@@ -482,6 +513,7 @@ while True :
                             p = (wrong_and_landmarks_points[9][0] , wrong_and_landmarks_points[9][1])
                             #cv2.putText(frame, "WRONG HAND", (int(0.4*wCam), 120), cv2.FONT_HERSHEY_SIMPLEX, 1.5, (0, 0, 0), 4, cv2.LINE_AA)
                             cv2.putText(frame, "WRONG HAND", (p[0]-50, p[1]+70), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0,0,0), 2, cv2.LINE_AA)
+                            cv2.putText(paintWindow, "WRONG HAND", (p[0]-50, p[1]+70), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0,0,0), 2, cv2.LINE_AA)
                             print("Wrong hand")
                         except : 
                              print(KeyError)
@@ -500,18 +532,21 @@ while True :
                  for i in range(len(line_points)) :
                       print(line_points[i])
                       cv2.line(frame , line_points[i][0] , line_points[i][1] , (0,0,0) ,2)
+                      cv2.line(paintWindow , line_points[i][0] , line_points[i][1] , (0,0,0) ,2)
 
             if(len(triangle_points)>0):
                  print(triangle_points)
                  for i in range(len(triangle_points)):
                       print(triangle_points[i])
                       cv2.polylines(frame , [triangle_points[i]],True,(0,0,0),2)
+                      cv2.polylines(paintWindow , [triangle_points[i]],True,(0,0,0),2)
 
             if(len(quadri_points)>0):
                  print(quadri_points)
                  for i in range(len(quadri_points)):
                       print(quadri_points[i])
                       cv2.rectangle(frame , quadri_points[i][0] , quadri_points[i][1],(0,0,0) , 2)
+                      cv2.rectangle(paintWindow , quadri_points[i][0] , quadri_points[i][1],(0,0,0) , 2)
                       
             if len(circle_points)>0 :
                 print(circle_points)
@@ -520,6 +555,7 @@ while True :
                         list(circle_points[i])
                         a , b, radius = circle_points[i][0],circle_points[i][1],circle_points[i][2]
                         cv2.circle(frame , (a,b),radius,(0,0,0),2)
+                        cv2.circle(paintWindow , (a,b),radius,(0,0,0),2)
         
             points = [bpoints, gpoints, rpoints, ypoints]
 
@@ -529,6 +565,7 @@ while True :
                         if points[i][j][k - 1] is None or points[i][j][k] is None:
                             continue
                         cv2.line(frame, points[i][j][k - 1], points[i][j][k], colors[i], 2)
+                        cv2.line(paintWindow, points[i][j][k - 1], points[i][j][k], colors[i], 2)
 
             if cv2.waitKey(1) == ord('q'):
                 break    
@@ -536,6 +573,8 @@ while True :
 
 
     cv2.imshow("GESTURE CONTROLLED AIR CANVAS", frame)
+    cv2.imshow("PAINT WINDOW", paintWindow)
+
     if cv2.waitKey(1) == ord('q'):
         break
 

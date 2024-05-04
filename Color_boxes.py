@@ -80,8 +80,8 @@ def color_boxes (frame , paintWindow):
     p3 = [start_box+(p2[0] - p1[0])//2 , 75 - tri_height]
     triangle_pts = np.array([p1,p2,p3],np.int32)
     triangle_pts = triangle_pts.reshape((-1,1,2))
-    frame = cv2.polylines(frame , [triangle_pts],isClosed=True , color=(0,0,0),thickness=2)
-    paintWindow = cv2.polylines(paintWindow , [triangle_pts],isClosed=True , color=(0,0,0),thickness=2)
+    frame = cv2.polylines(frame , [triangle_pts],isClosed=True , color=(0,0,0),thickness=2 , lineType=cv2.LINE_AA)
+    paintWindow = cv2.polylines(paintWindow , [triangle_pts],isClosed=True , color=(0,0,0),thickness=2 ,lineType=cv2.LINE_AA)
 
     #line button
     frame = cv2.rectangle(frame, (tri_end+15,4), (tri_end+80,65), (0,0,0), 2)
@@ -89,8 +89,35 @@ def color_boxes (frame , paintWindow):
     frame = cv2.line(frame , (tri_end+30,30) , (tri_end+80-10,30) , (0,0,0) , 2,cv2.LINE_AA)
     paintWindow = cv2.line(paintWindow , (tri_end+30,30) , (tri_end+80-10,30) , (0,0,0) , 2,cv2.LINE_AA)
     line_start , line_end = tri_end+20 ,tri_end+80
+
+    # rhombus 
+    rhm2 = np.array([line_end+15 , 35])
+    rhm4 = np.array([rhm2[0]+70 , 35]) 
+
+    #calculate rhm0 & rhm2
+    rhm1 = np.array([(rhm2[0]+rhm4[0])//2, rhm2[1]-(rhm4[0]-rhm2[0])//2])
+    rhm3 = np.array([(rhm2[0]+rhm4[0])//2, rhm2[1]+(rhm4[0]-rhm2[0])//2])
+    rhombus_pts = np.array([rhm1,rhm2,rhm3,rhm4],np.int32)
+    rhombus_pts = rhombus_pts.reshape((-1,1,2))
+    frame = cv2.polylines(frame , [rhombus_pts] , True , (0,0,0) , 2)
+    paintWindow = cv2.polylines(paintWindow , [rhombus_pts] , True , (0,0,0) , 2)
+
+    ### ellipse button
+    center_coordinates = (rhm4[0]+80, 35)
+    cv2.circle(frame , center_coordinates , 4 , (0,0,0) , -1)
+    major_axis_length = 60
+    minor_axis_length = 30
+    angle = 0
+    start_angle = 0
+    end_angle = 360
+    
+    frame = cv2.ellipse(frame, center_coordinates, (major_axis_length, minor_axis_length),
+            angle, start_angle, end_angle, (0,0,0), 2) 
+    paintWindow = cv2.ellipse(paintWindow, center_coordinates, (major_axis_length, minor_axis_length),
+            angle, start_angle, end_angle, (0,0,0), 2)
     ## dividing line
     cv2.line(frame , (0,100) , (1280,100) , (0,0,0) , 2,cv2.LINE_AA)
     cv2.line(paintWindow , (0,100) , (1280,100) , (0,0,0) , 2,cv2.LINE_AA)
+    
     ## to keep a track of the color boxes indices
-    return [clear_start , clear_end , blue_start , blue_end , green_start , green_end , red_start , red_end , yellow_start , yellow_end,circle_st , circle_end ,quadri_start , quadri_end , tri_start , tri_end , line_start , line_end]
+    return [clear_start , clear_end , blue_start , blue_end , green_start , green_end , red_start , red_end , yellow_start , yellow_end,circle_st , circle_end ,quadri_start , quadri_end , tri_start , tri_end , line_start , line_end ,rhm2[0] ,rhm4[0] , center_coordinates[0]-60 , center_coordinates[0]+60]

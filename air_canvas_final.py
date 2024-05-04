@@ -3,17 +3,27 @@ import numpy as np
 import mediapipe as mp
 from collections import deque
 from Color_boxes import color_boxes
-from Geometry import make_circle , make_quadri , make_triangle , make_line
+from Geometry import make_circle , make_quadri , make_triangle , make_line , make_arrowed_line ,make_rhombus ,make_ellipse
 
 
 bpoints = [deque(maxlen=2048)]
 gpoints = [deque(maxlen=2048)]
 rpoints = [deque(maxlen=2048)]
 ypoints = [deque(maxlen=2048)]
+
+#shapes coordinates
 circle_points = []
 quadri_points = []
 triangle_points = []
 line_points = []
+arrowed_line_points =[]
+rhombus_points = []
+ellipse_points = []
+
+makeline = False 
+makearrowline = False
+arrow_pt1 = ()
+line_pt1 = ()
 
 #used to indicate the current color changes
 blue_index = 0
@@ -110,7 +120,7 @@ while True :
             thumb = (landmarks[4][0],landmarks[4][1])
             cv2.circle(frame, center, 7, (0,255,0),-1)
             cv2.circle(paintWindow, center, 7, (0,255,0),-1)
-            print(center[1]-thumb[1])
+            #print(center[1]-thumb[1])
 
             if center[1] >=400 and center[1] <=530 :
 
@@ -179,7 +189,7 @@ while True :
                         # cv2.circle(frame, ring_finger, 7, (0,0,0),-3)
                         cv2.circle(frame, center, 7, (0,255,0),-1)
                         cv2.circle(paintWindow, center, 7, (0,255,0),-1)
-                        print(center[1]-thumb[1])
+                        #print(center[1]-thumb[1])
 
 
                         #if the index finger tip is at the buttons space so don't draw
@@ -197,6 +207,9 @@ while True :
                                     quadri_points = []
                                     triangle_points = []
                                     line_points = []
+                                    arrowed_line_points =[]
+                                    rhombus_points = []
+                                    ellipse_points = []
 
                                     blue_index = 0
                                     green_index = 0
@@ -227,12 +240,22 @@ while True :
 
                             ## line banane k liye 
                             elif start_end[16] <= center[0] <= start_end[17] and start_end[16] <= thumb[0] <= start_end[17] and thumb[1]-center[1]<25:
-                                 print("****************** in ci *************")
-                                 colorIndex = 7
+                                
+                                colorIndex = 7
+                            
+                            ## rhombus
+                            elif start_end[18] <= center[0] <= start_end[19] and start_end[18] <= thumb[0] <= start_end[19] and thumb[1]-center[1]<25 :
+                                 print("inside rhombus")
+                                 colorIndex = 8
+
+                            ##ellipse 
+                            elif start_end[20] <= center[0] <= start_end[21] and start_end[20] <= thumb[0] <= start_end[21] and thumb[1]-center[1]<25 :
+                                 print("inside ellipse")
+                                 colorIndex = 9
 
                         ### when we pinch don't draw , so we are measuring the distance between the index finger and thumb tip if it comes below 20 then don't draw
 
-                        elif (thumb[1]-center[1]<20):
+                        elif (thumb[1]-center[1]<15) and colorIndex < 4 :
                             bpoints.append(deque(maxlen=1024))
                             blue_index += 1
                             gpoints.append(deque(maxlen=1024))
@@ -253,37 +276,95 @@ while True :
                             elif colorIndex == 3:
                                 ypoints[yellow_index].appendleft(center)
                             elif colorIndex == 4:
-                                circle_arr = make_circle(frame , paintWindow ,center , thumb , middle_finger) 
-                                cv2.circle(frame , (circle_arr[0],circle_arr[1]),circle_arr[2],(0,0,0),2)
-                                cv2.circle(paintWindow , (circle_arr[0],circle_arr[1]),circle_arr[2],(0,0,0),2)
-                                circle_points.append(circle_arr)
-                                print("oooooooooooooooooooo")
-                                colorIndex = 8
+                                circle_arr = make_circle(frame , paintWindow ,center , thumb , middle_finger)
+                                if(circle_arr[0] is not None) : 
+                                    cv2.circle(frame , (circle_arr[0],circle_arr[1]),circle_arr[2],(0,0,0),2)
+                                    cv2.circle(paintWindow , (circle_arr[0],circle_arr[1]),circle_arr[2],(0,0,0),2)
+                                    circle_points.append(circle_arr)
+                                    #print("oooooooooooooooooooo")
+                                    colorIndex = 20
+
                             elif colorIndex == 5 :
                                 quadri_arr = make_quadri(frame , paintWindow ,center , thumb , middle_finger)
-                                cv2.rectangle(frame, (quadri_arr[0][0],quadri_arr[0][1]), (quadri_arr[1][0],quadri_arr[1][1]), (0,0,0), 2)
-                                cv2.rectangle(paintWindow, (quadri_arr[0][0],quadri_arr[0][1]), (quadri_arr[1][0],quadri_arr[1][1]), (0,0,0), 2)
-                                quadri_points.append(quadri_arr)
-                                print("DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD")
-                                colorIndex = 8
+                                if(quadri_arr[0] is not None) :
+                                    cv2.rectangle(frame, (quadri_arr[0][0],quadri_arr[0][1]), (quadri_arr[1][0],quadri_arr[1][1]), (0,0,0), 2)
+                                    cv2.rectangle(paintWindow, (quadri_arr[0][0],quadri_arr[0][1]), (quadri_arr[1][0],quadri_arr[1][1]), (0,0,0), 2)
+                                    quadri_points.append(quadri_arr)
+                                    #print("DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD")
+                                    colorIndex = 20
 
                             elif colorIndex == 6 :
                                 tri_arr = make_triangle(frame , paintWindow ,center , thumb , middle_finger , ring_finger)
-                                p1 , p2 , p3 = tri_arr[0] , tri_arr[1] , tri_arr[2] 
-                                tri_pts = np.array([p1,p2,p3],np.int32)
-                                tri_pts = tri_pts.reshape((-1,1,2))
-                                cv2.polylines(frame , [tri_pts],isClosed=True , color=(0,0,0) , thickness=2)
-                                cv2.polylines(paintWindow , [tri_pts],isClosed=True , color=(0,0,0) , thickness=2)
-                                triangle_points.append(tri_pts)
-                                colorIndex = 8
+                                if tri_arr[0] is not None:
+                                    tri_pts = np.array(tri_arr,np.int32)
+                                    tri_pts = tri_pts.reshape((-1,1,2))
+                                    cv2.polylines(frame , [tri_pts],isClosed=True , color=(0,0,0) , thickness=2)
+                                    #print("triangle displayed-1")
+                                    cv2.polylines(paintWindow , [tri_pts],isClosed=True , color=(0,0,0) , thickness=2)
+                                    #print("triangle displayed-2")
+                                    triangle_points.append(tri_pts)
+                                    colorIndex = 20
                             
                             elif colorIndex == 7 :
-                                 line_arr = make_line(frame ,paintWindow , center , thumb , middle_finger)
-                                 cv2.line(frame , line_arr[0] , line_arr[1] , (0,0,0) , 2)
-                                 cv2.line(paintWindow ,line_arr[0] , line_arr[1] , (0,0,0) , 2)
-                                 line_points.append(line_arr)
-                                 colorIndex = 8
+                                if(makeline == False and makearrowline == False):
+                                    cv2.putText(frame , "Press l for line a for arrowed line" ,(int(0.4*wCam),90) , cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 0), 2, cv2.LINE_AA)
+                                    cv2.putText(paintWindow , "Press l for line a for arrowed line" ,(int(0.4*wCam),90) , cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 0), 2, cv2.LINE_AA)
+                                    k = cv2.waitKey(1)
+                                    if(k == ord('l')) :
+                                        makeline = True
+                                        makearrowline = False
+                                        #print(makeline , makearrowline)
+                                    elif(k == ord('a')) :
+                                         makeline = False 
+                                         makearrowline = True  
+                                         
+                                
+                                elif(makeline == True and makearrowline == False) :
+                                    if(abs(center[0]-thumb[0])<10 or abs(center[1]-thumb[1])<10) :
+                                        line_pt1 = center
+                                    if(len(line_pt1) > 0):
+                                        line_arr = make_line(frame , paintWindow , line_pt1 , center , middle_finger)
+                                        if(line_arr[0] is not None) :
+                                            frame = cv2.line(frame , line_arr[0] , line_arr[1] , (0,0,0) , 2 , cv2.LINE_AA)
+                                            paintWindow = cv2.line(paintWindow , line_arr[0] , line_arr[1] , (0,0,0) , 2 ,cv2.LINE_AA)
+                                            line_points.append(line_arr)
+                                            
+                                            makeline = False
+                                            line_pt1 = ()
+                                            colorIndex = 20                                        
+                                
+                                elif(makearrowline == True and makeline == False) :
+                                    if(abs(center[0]-thumb[0])<10 or abs(center[1]-thumb[1])<10) :
+                                        arrow_pt1 = center
+                                    if(len(arrow_pt1) > 0) :
+                                        arrowed_line_arr = make_arrowed_line(frame ,paintWindow , arrow_pt1 , center , middle_finger)
+                                        if(arrowed_line_arr[0] is not None) :
+                                            frame = cv2.arrowedLine(frame , arrowed_line_arr[0] , arrowed_line_arr[1] , (0,0,0) , 2 , cv2.LINE_AA)
+                                            paintWindow = cv2.arrowedLine(paintWindow , arrowed_line_arr[0] , arrowed_line_arr[1] , (0,0,0) , 2 , cv2.LINE_AA)
+                                            arrowed_line_points.append(arrowed_line_arr)
+                                            
+                                            makearrowline = False
+                                            arrow_pt1 = ()
+                                            colorIndex = 20
 
+                            elif colorIndex == 8 :
+                                
+                                rhombus_arr = make_rhombus(frame , paintWindow , center , thumb , middle_finger)
+                                if(rhombus_arr is not None) :                                     
+                                    rhombus_pts = np.array(rhombus_arr)
+                                    rhombus_pts = rhombus_pts.reshape((-1,1,2))
+                                    cv2.polylines(frame , [rhombus_pts],True , (0,0,0) , 2,cv2.LINE_AA)
+                                    cv2.polylines(paintWindow , [rhombus_pts],True , (0,0,0) , 2 , cv2.LINE_AA)
+                                    rhombus_points.append(rhombus_pts)
+                                    colorIndex = 20
+                            
+                            elif colorIndex == 9 :
+                                ellipse_arr = make_ellipse (frame , paintWindow ,center , thumb , middle_finger)
+                                if(ellipse_arr[0] is not None) :
+                                    cv2.ellipse(frame , ellipse_arr[0] , (ellipse_arr[1]//2 , ellipse_arr[2]) , ellipse_arr[3] , 0,360,(0,0,0) , 2)
+                                    cv2.ellipse(paintWindow , ellipse_arr[0] , (ellipse_arr[1]//2 , ellipse_arr[2]) , ellipse_arr[3] , 0,360,(0,0,0) , 2)
+                                    ellipse_points.append(ellipse_arr)
+                                    colorIndex = 20
 
 
                     except :
@@ -306,36 +387,43 @@ while True :
                 red_index += 1
                 ypoints.append(deque(maxlen=1024))
                 yellow_index += 1
+            
+            if(len(ellipse_points) > 0) :
+                for i in range(len(ellipse_points)) :
+                    cv2.ellipse(frame , ellipse_points[i][0] , (ellipse_points[i][1]//2 , ellipse_points[i][2]) , ellipse_points[i][3] , 0,360,(0,0,0) , 2)
+                    cv2.ellipse(paintWindow , ellipse_points[i][0] , (ellipse_points[i][1]//2 , ellipse_points[i][2]) , ellipse_points[i][3] , 0,360,(0,0,0) , 2 ,cv2.LINE_AA)
 
             if(len(line_points) > 0):
-                 print(line_points)
                  for i in range(len(line_points)) :
-                      print(line_points[i])
-                      cv2.line(frame , line_points[i][0] , line_points[i][1] , (0,0,0) ,2)
-                      cv2.line(paintWindow , line_points[i][0] , line_points[i][1] , (0,0,0) ,2)
+                      cv2.line(frame , line_points[i][0] , line_points[i][1] , (0,0,0) ,2 , cv2.LINE_AA)
+                      cv2.line(paintWindow , line_points[i][0] , line_points[i][1] , (0,0,0) ,2,cv2.LINE_AA)
+
+            if(len(arrowed_line_points) > 0):
+                 for i in range(len(arrowed_line_points)) :
+                      cv2.arrowedLine(frame , arrowed_line_points[i][0] , arrowed_line_points[i][1] , (0,0,0) ,2,cv2.LINE_AA)
+                      cv2.arrowedLine(paintWindow , arrowed_line_points[i][0] , arrowed_line_points[i][1] , (0,0,0) ,2,cv2.LINE_AA)
 
             if(len(triangle_points)>0):
-                 print(triangle_points)
                  for i in range(len(triangle_points)):
-                      print(triangle_points[i])
-                      cv2.polylines(frame , [triangle_points[i]],True,(0,0,0),2)
-                      cv2.polylines(paintWindow , [triangle_points[i]],True,(0,0,0),2)
+                      cv2.polylines(frame , [triangle_points[i]],True,(0,0,0),2,cv2.LINE_AA)
+                      cv2.polylines(paintWindow , [triangle_points[i]],True,(0,0,0),2,cv2.LINE_AA)
 
             if(len(quadri_points)>0):
-                 print(quadri_points)
                  for i in range(len(quadri_points)):
-                      print(quadri_points[i])
-                      cv2.rectangle(frame , quadri_points[i][0] , quadri_points[i][1],(0,0,0) , 2)
-                      cv2.rectangle(paintWindow , quadri_points[i][0] , quadri_points[i][1],(0,0,0) , 2)
+                      cv2.rectangle(frame , quadri_points[i][0] , quadri_points[i][1],(0,0,0) , 2,cv2.LINE_AA)
+                      cv2.rectangle(paintWindow , quadri_points[i][0] , quadri_points[i][1],(0,0,0) , 2,cv2.LINE_AA)
                       
             if len(circle_points)>0 :
-                print(circle_points)
                 for i in range(len(circle_points)):
-                        print(circle_points[i])
                         list(circle_points[i])
                         a , b, radius = circle_points[i][0],circle_points[i][1],circle_points[i][2]
-                        cv2.circle(frame , (a,b),radius,(0,0,0),2)
-                        cv2.circle(paintWindow , (a,b),radius,(0,0,0),2)
+                        cv2.circle(frame , (a,b),radius,(0,0,0),2 ,cv2.LINE_AA)
+                        cv2.circle(paintWindow , (a,b),radius,(0,0,0),2 ,cv2.LINE_AA)
+            if len(rhombus_points) > 0 :
+                 for i in range(len(rhombus_points)) :
+                    #list(rhombus_points[i])
+                    cv2.polylines(frame , [rhombus_points[i]] , True , (0,0,0) , 2 ,cv2.LINE_AA)
+                    cv2.polylines(paintWindow , [rhombus_points[i]] , True , (0,0,0) , 2 ,cv2.LINE_AA)
 
                     
             points = [bpoints, gpoints, rpoints, ypoints]
@@ -401,7 +489,7 @@ while True :
                         # cv2.circle(frame, ring_finger, 7, (0,0,0),-3)
                         cv2.circle(frame, center, 7, (0,255,0),-1)
                         cv2.circle(paintWindow, center, 7, (0,255,0),-1)
-                        print(center[1]-thumb[1])
+                        #print(center[1]-thumb[1])
 
 
                         #if the index finger tip is at the buttons space so don't draw
@@ -419,6 +507,9 @@ while True :
                                     quadri_points = []
                                     triangle_points = []
                                     line_points = []
+                                    arrowed_line_points =[]
+                                    rhombus_points = []
+                                    ellipse_points = []
 
                                     blue_index = 0
                                     green_index = 0
@@ -444,14 +535,23 @@ while True :
                             
                             ## triangle banane k liye 
                             elif start_end[14] <= center[0] <= start_end[15] and start_end[14] <= thumb[0] <= start_end[15] and thumb[1]-center[1]<25:
-                                 print("-----------int ci 6---------------")
+                                 #print("-----------int ci 6---------------")
                                  colorIndex = 6
 
                             ## line banane k liye 
                             elif start_end[16] <= center[0] <= start_end[17] and start_end[16] <= thumb[0] <= start_end[17] and thumb[1]-center[1]<25:
-                                 print("****************** in ci *************")
+                                 #print("****************** in ci *************")
                                  colorIndex = 7
 
+                            ## rhombus
+                            elif start_end[18] <= center[0] <= start_end[19] and start_end[18] <= thumb[0] <= start_end[19] and thumb[1]-center[1]<25 :
+                                 print("inside rhombus")
+                                 colorIndex = 8
+
+                            ##ellipse 
+                            elif start_end[20] <= center[0] <= start_end[21] and start_end[20] <= thumb[0] <= start_end[21] and thumb[1]-center[1]<25 :
+                                 print("inside ellipse")
+                                 colorIndex = 9
 
                         ### when we pinch don't draw , so we are measuring the distance between the index finger and thumb tip if it comes below 20 then don't draw
 
@@ -476,36 +576,95 @@ while True :
                             elif colorIndex == 3:
                                 ypoints[yellow_index].appendleft(center)
                             elif colorIndex == 4:
-                                circle_arr = make_circle(frame , center , thumb , middle_finger) 
-                                cv2.circle(frame , (circle_arr[0],circle_arr[1]),circle_arr[2],(0,0,0),2)
-                                cv2.circle(paintWindow , (circle_arr[0],circle_arr[1]),circle_arr[2],(0,0,0),2)
-                                circle_points.append(circle_arr)
-                                print("oooooooooooooooooooo")
-                                colorIndex = 8
+                                circle_arr = make_circle(frame , paintWindow ,center , thumb , middle_finger)
+                                if(circle_arr[0] is not None) : 
+                                    cv2.circle(frame , (circle_arr[0],circle_arr[1]),circle_arr[2],(0,0,0),2)
+                                    cv2.circle(paintWindow , (circle_arr[0],circle_arr[1]),circle_arr[2],(0,0,0),2)
+                                    circle_points.append(circle_arr)
+                                    #print("oooooooooooooooooooo")
+                                    colorIndex = 20
+
                             elif colorIndex == 5 :
-                                quadri_arr = make_quadri(frame , center , thumb , middle_finger)
-                                cv2.rectangle(frame, (quadri_arr[0][0],quadri_arr[0][1]), (quadri_arr[1][0],quadri_arr[1][1]), (0,0,0), 2)
-                                cv2.rectangle(paintWindow, (quadri_arr[0][0],quadri_arr[0][1]), (quadri_arr[1][0],quadri_arr[1][1]), (0,0,0), 2)
-                                quadri_points.append(quadri_arr)
-                                print("DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD")
-                                colorIndex = 8
+                                quadri_arr = make_quadri(frame , paintWindow ,center , thumb , middle_finger)
+                                if(quadri_arr[0] is not None) :
+                                    cv2.rectangle(frame, (quadri_arr[0][0],quadri_arr[0][1]), (quadri_arr[1][0],quadri_arr[1][1]), (0,0,0), 2)
+                                    cv2.rectangle(paintWindow, (quadri_arr[0][0],quadri_arr[0][1]), (quadri_arr[1][0],quadri_arr[1][1]), (0,0,0), 2)
+                                    quadri_points.append(quadri_arr)
+                                    #print("DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD")
+                                    colorIndex = 20
 
                             elif colorIndex == 6 :
-                                tri_arr = make_triangle(frame , center , thumb , middle_finger , ring_finger)
-                                p1 , p2 , p3 = tri_arr[0] , tri_arr[1] , tri_arr[2] 
-                                tri_pts = np.array([p1,p2,p3],np.int32)
-                                tri_pts = tri_pts.reshape((-1,1,2))
-                                cv2.polylines(frame , [tri_pts],isClosed=True , color=(0,0,0) , thickness=2)
-                                cv2.polylines(paintWindow , [tri_pts],isClosed=True , color=(0,0,0) , thickness=2)
-                                triangle_points.append(tri_pts)
-                                colorIndex = 8
+                                tri_arr = make_triangle(frame , paintWindow ,center , thumb , middle_finger , ring_finger)
+                                if tri_arr[0] is not None:
+                                    tri_pts = np.array(tri_arr,np.int32)
+                                    tri_pts = tri_pts.reshape((-1,1,2))
+                                    cv2.polylines(frame , [tri_pts],isClosed=True , color=(0,0,0) , thickness=2)
+                                    #print("triangle displayed-1")
+                                    cv2.polylines(paintWindow , [tri_pts],isClosed=True , color=(0,0,0) , thickness=2)
+                                    #print("triangle displayed-2")
+                                    triangle_points.append(tri_pts)
+                                    colorIndex = 20
                             
                             elif colorIndex == 7 :
-                                 line_arr = make_line(frame , center , thumb , middle_finger)
-                                 cv2.line(frame , line_arr[0] , line_arr[1] , (0,0,0) , 2)
-                                 cv2.line(paintWindow ,line_arr[0] , line_arr[1] , (0,0,0) , 2)
-                                 line_points.append(line_arr)
-                                 colorIndex = 8
+                                if(makeline == False and makearrowline == False):
+                                    cv2.putText(frame , "Press l for line a for arrowed line" ,(int(0.4*wCam),90) , cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 0), 2, cv2.LINE_AA)
+                                    cv2.putText(paintWindow , "Press l for line a for arrowed line" ,(int(0.4*wCam),90) , cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 0), 2, cv2.LINE_AA)
+                                    k = cv2.waitKey(1)
+                                    if(k == ord('l')) :
+                                        makeline = True
+                                        makearrowline = False
+                                        #print(makeline , makearrowline)
+                                    elif(k == ord('a')) :
+                                         makeline = False 
+                                         makearrowline = True  
+                                         
+                                
+                                elif(makeline == True and makearrowline == False) :
+                                    if(abs(center[0]-thumb[0])<10 or abs(center[1]-thumb[1])<10) :
+                                        line_pt1 = center
+                                    if(len(line_pt1) > 0):
+                                        line_arr = make_line(frame , paintWindow , line_pt1 , center , middle_finger)
+                                        if(line_arr[0] is not None) :
+                                            frame = cv2.line(frame , line_arr[0] , line_arr[1] , (0,0,0) , 2 , cv2.LINE_AA)
+                                            paintWindow = cv2.line(paintWindow , line_arr[0] , line_arr[1] , (0,0,0) , 2 ,cv2.LINE_AA)
+                                            line_points.append(line_arr)
+                                            
+                                            makeline = False
+                                            line_pt1 = ()
+                                            colorIndex = 20                                        
+                                
+                                elif(makearrowline == True and makeline == False) :
+                                    if(abs(center[0]-thumb[0])<10 or abs(center[1]-thumb[1])<10) :
+                                        arrow_pt1 = center
+                                    if(len(arrow_pt1) > 0) :
+                                        arrowed_line_arr = make_arrowed_line(frame ,paintWindow , arrow_pt1 , center , middle_finger)
+                                        if(arrowed_line_arr[0] is not None) :
+                                            frame = cv2.arrowedLine(frame , arrowed_line_arr[0] , arrowed_line_arr[1] , (0,0,0) , 2 , cv2.LINE_AA)
+                                            paintWindow = cv2.arrowedLine(paintWindow , arrowed_line_arr[0] , arrowed_line_arr[1] , (0,0,0) , 2 , cv2.LINE_AA)
+                                            arrowed_line_points.append(arrowed_line_arr)
+                                            
+                                            makearrowline = False
+                                            arrow_pt1 = ()
+                                            colorIndex = 20
+
+                            elif colorIndex == 8 :
+                                
+                                rhombus_arr = make_rhombus(frame , paintWindow , center , thumb , middle_finger)
+                                if(rhombus_arr is not None) :                                     
+                                    rhombus_pts = np.array(rhombus_arr)
+                                    rhombus_pts = rhombus_pts.reshape((-1,1,2))
+                                    cv2.polylines(frame , [rhombus_pts],True , (0,0,0) , 2,cv2.LINE_AA)
+                                    cv2.polylines(paintWindow , [rhombus_pts],True , (0,0,0) , 2 , cv2.LINE_AA)
+                                    rhombus_points.append(rhombus_pts)
+                                    colorIndex = 20
+                            
+                            elif colorIndex == 9 :
+                                ellipse_arr = make_ellipse (frame , paintWindow ,center , thumb , middle_finger)
+                                if(ellipse_arr[0] is not None) :
+                                    cv2.ellipse(frame , ellipse_arr[0] , (ellipse_arr[1]//2 , ellipse_arr[2]) , ellipse_arr[3] , 0,360,(0,0,0) , 2)
+                                    cv2.ellipse(paintWindow , ellipse_arr[0] , (ellipse_arr[1]//2 , ellipse_arr[2]) , ellipse_arr[3] , 0,360,(0,0,0) , 2)
+                                    ellipse_points.append(ellipse_arr)
+                                    colorIndex = 20
                                                             
 
                     except :
@@ -527,35 +686,43 @@ while True :
                 red_index += 1
                 ypoints.append(deque(maxlen=1024))
                 yellow_index += 1
+
+            if(len(ellipse_points) > 0) :
+                for i in range(len(ellipse_points)) :
+                    cv2.ellipse(frame , ellipse_points[i][0] , (ellipse_points[i][1]//2 , ellipse_points[i][2]) , ellipse_points[i][3] , 0,360,(0,0,0) , 2)
+                    cv2.ellipse(paintWindow , ellipse_points[i][0] , (ellipse_points[i][1]//2 , ellipse_points[i][2]) , ellipse_points[i][3] , 0,360,(0,0,0) , 2 , cv2.LINE_AA)
+
             if(len(line_points) > 0):
-                 print(line_points)
                  for i in range(len(line_points)) :
-                      print(line_points[i])
-                      cv2.line(frame , line_points[i][0] , line_points[i][1] , (0,0,0) ,2)
-                      cv2.line(paintWindow , line_points[i][0] , line_points[i][1] , (0,0,0) ,2)
+                      cv2.line(frame , line_points[i][0] , line_points[i][1] , (0,0,0) ,2 , cv2.LINE_AA)
+                      cv2.line(paintWindow , line_points[i][0] , line_points[i][1] , (0,0,0) ,2,cv2.LINE_AA)
+
+            if(len(arrowed_line_points) > 0):
+                 for i in range(len(arrowed_line_points)) :
+                      cv2.arrowedLine(frame , arrowed_line_points[i][0] , arrowed_line_points[i][1] , (0,0,0) ,2,cv2.LINE_AA)
+                      cv2.arrowedLine(paintWindow , arrowed_line_points[i][0] , arrowed_line_points[i][1] , (0,0,0) ,2,cv2.LINE_AA)
 
             if(len(triangle_points)>0):
-                 print(triangle_points)
                  for i in range(len(triangle_points)):
-                      print(triangle_points[i])
-                      cv2.polylines(frame , [triangle_points[i]],True,(0,0,0),2)
-                      cv2.polylines(paintWindow , [triangle_points[i]],True,(0,0,0),2)
+                      cv2.polylines(frame , [triangle_points[i]],True,(0,0,0),2,cv2.LINE_AA)
+                      cv2.polylines(paintWindow , [triangle_points[i]],True,(0,0,0),2,cv2.LINE_AA)
 
             if(len(quadri_points)>0):
-                 print(quadri_points)
                  for i in range(len(quadri_points)):
-                      print(quadri_points[i])
-                      cv2.rectangle(frame , quadri_points[i][0] , quadri_points[i][1],(0,0,0) , 2)
-                      cv2.rectangle(paintWindow , quadri_points[i][0] , quadri_points[i][1],(0,0,0) , 2)
+                      cv2.rectangle(frame , quadri_points[i][0] , quadri_points[i][1],(0,0,0) , 2,cv2.LINE_AA)
+                      cv2.rectangle(paintWindow , quadri_points[i][0] , quadri_points[i][1],(0,0,0) , 2,cv2.LINE_AA)
                       
             if len(circle_points)>0 :
-                print(circle_points)
                 for i in range(len(circle_points)):
-                        print(circle_points[i])
                         list(circle_points[i])
                         a , b, radius = circle_points[i][0],circle_points[i][1],circle_points[i][2]
-                        cv2.circle(frame , (a,b),radius,(0,0,0),2)
-                        cv2.circle(paintWindow , (a,b),radius,(0,0,0),2)
+                        cv2.circle(frame , (a,b),radius,(0,0,0),2 ,cv2.LINE_AA)
+                        cv2.circle(paintWindow , (a,b),radius,(0,0,0),2 ,cv2.LINE_AA)
+            if len(rhombus_points) > 0 :
+                 for i in range(len(rhombus_points)) :
+                    #list(rhombus_points[i])
+                    cv2.polylines(frame , [rhombus_points[i]] , True , (0,0,0) , 2 ,cv2.LINE_AA)
+                    cv2.polylines(paintWindow , [rhombus_points[i]] , True , (0,0,0) , 2 ,cv2.LINE_AA)
         
             points = [bpoints, gpoints, rpoints, ypoints]
 

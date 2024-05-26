@@ -13,15 +13,15 @@ python3 , numpy , opencv, mediapipe
 
 ## file contents
 
-# air_canvas.py
+### air_canvas.py
 
 Main file where the project is to start the execution
 
-# Color_boxes.py
+### Color_boxes.py
 
 Draw the options to make various selections
 
-# Geometry.py
+### Geometry.py
 
 Draw various figures and geometric shapes
 

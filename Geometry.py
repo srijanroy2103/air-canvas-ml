@@ -104,7 +104,7 @@ def make_rhombus(frame , paintWindow ,center , thumb , middle_finger) :
     rhombus_pts = rhombus_pts.reshape((-1,1,2))
     frame = cv2.polylines(frame , [rhombus_pts] , True , (0,0,0) , 2)
     paintWindow = cv2.polylines(paintWindow , [rhombus_pts] , True , (0,0,0) , 2)
-    if(abs(middle_finger[1] - center[1]) < 10 or abs(middle_finger[0] - center[0]) < 10) :
+    if(abs(middle_finger[1] - center[1]) < 15 or abs(middle_finger[0] - center[0]) < 15) :
         return rhombus_pts
     
 
